@@ -1,0 +1,145 @@
+@page "/periods"
+@inject StudentMedia.Data.IPeriodService PeriodService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Períodos</PageTitle>
+
+<h4>Períodos</h4>
+
+<button class="btn btn-success" @onclick="() => NewPeriod()">Novo</button>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Quantidade de Notas</th>
+            <th class="col-2"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var period in periods)
+        {
+            <tr>
+                <td>@period.Name</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" @onclick="() => ShowEditPeriodModal(period)">Editar</button>
+                    <button class="btn btn-sm btn-danger" @onclick="() => ShowDeleteConfirmation(period)">Excluir</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!periods.Any())
+{
+    <p class="text-center">Nenhum período cadastrado.</p>
+}
+
+@if (showConfirmationModal)
+{
+    <div class="modal show d-block" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Exclusão</h5>
+                    <button type="button" class="close" aria-label="Close" @onclick="CloseModal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja excluir o período @periodToDelete?.Name? </p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="ConfirmDelete">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showEditModal)
+{
+    <PeriodModal
+        period="periodToEdit"
+        title="Editar Período"
+        OnValidSubmit="UpdatePeriod"
+        CloseModalCallback="CloseEditModal" />
+}
+
+@if (showNewPeriodModal)
+{
+    <PeriodModal
+        period="newPeriod"
+        title="Novo Período"
+        OnValidSubmit="CreatePeriod"
+        CloseModalCallback="CloseNewPeriodModal" />
+}
+
+@code {
+    private List<Models.Period>? periods;
+    private bool showConfirmationModal = false;
+    private bool showEditModal = false;
+    private bool showNewPeriodModal = false;
+    private Models.Period periodToDelete;
+    private Models.Period periodToEdit;
+    private Models.Period newPeriod { get; set; } = new Models.Period();
+
+    protected override async Task OnInitializedAsync()
+    {
+        periods = await PeriodService.GetPeriodsAsync();
+    }
+
+    private void NewPeriod()
+    {
+        showNewPeriodModal = true;
+    }
+
+    private void ShowEditPeriodModal(Models.Period period)
+    {
+        periodToEdit = period;
+        showEditModal = true;
+    }
+
+    private void ShowDeleteConfirmation(Models.Period period)
+    {
+        periodToDelete = period;
+        showConfirmationModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showConfirmationModal = false;
+    }
+
+    private void CloseEditModal()
+    {
+        showEditModal = false;
+    }
+
+    private void CloseNewPeriodModal()
+    {
+        showNewPeriodModal = false;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        await PeriodService.DeletePeriodAsync(periodToDelete.Id);
+        periods.Remove(periodToDelete);
+        CloseModal();
+    }
+
+    private async Task CreatePeriod()
+    {
+        await PeriodService.AddPeriodAsync(newPeriod);
+        periods = await PeriodService.GetPeriodsAsync();
+        CloseNewPeriodModal();
+    }
+
+    private async Task UpdatePeriod()
+    {
+        await PeriodService.UpdatePeriodAsync(periodToEdit);
+        periods = await PeriodService.GetPeriodsAsync();
+        CloseEditModal();
+    }
+}

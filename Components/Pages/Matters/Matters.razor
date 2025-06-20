@@ -1,0 +1,153 @@
+@page "/matters"
+@inject StudentMedia.Data.IMatterService MatterService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+@inject ILogger<Models.Matter?> Logger
+
+<PageTitle>Matérias</PageTitle>
+
+<h4>Matérias</h4>
+
+<button class="btn btn-success" @onclick="() => NewMatter()">Novo</button>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th class="col-2"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var matter in matters)
+        {
+            <tr>
+                <td>@matter.Name</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" @onclick="() => ShowEditMatterModal(matter)">Editar</button>
+                    <button class="btn btn-sm btn-danger" @onclick="() => ShowDeleteConfirmation(matter)">Excluir</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!matters.Any())
+{
+    <p class="text-center">Nenhuma matéria cadastrada.</p>
+}
+
+@if (showConfirmationModal)
+{
+    <div class="modal show d-block" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Exclusão</h5>
+                    <button type="button" class="close" aria-label="Close" @onclick="CloseModal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja excluir a matéria @matterToDelete?.Name? </p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="ConfirmDelete">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop fade show"></div>
+}
+
+@if (showNewMatterModal)
+{
+    <MatterModal
+        title="Nova Matéria"
+        matter="newMatter"
+        OnValidSubmit="CreateMatter"
+        CloseModalCallback="CloseNewMatterModal" />
+}
+
+@if (showEditMatterModal)
+{
+    <MatterModal
+        title="Editar Matéria"
+        matter="matterToEdit"
+        OnValidSubmit="UpdateMatter"
+        CloseModalCallback="CloseEditMatterModal" />
+}
+
+@code {
+    private List<Models.Matter>? matters;
+    private bool showConfirmationModal = false;
+    private Models.Matter matterToDelete;
+    private Models.Matter matterToEdit;
+    private bool showNewMatterModal { get; set; }
+    private bool showEditMatterModal { get; set; } = false;
+    private Models.Matter newMatter { get; set; } = new Models.Matter();
+
+    protected override async Task OnInitializedAsync()
+    {
+        matters = await MatterService.GetMattersAsync();
+    }
+
+    private void ShowDeleteConfirmation(Models.Matter matter)
+    {
+        matterToDelete = matter;
+        showConfirmationModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showConfirmationModal = false;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        await DeleteMatter(matterToDelete.Id);
+        showConfirmationModal = false;
+    }
+
+    private async Task DeleteMatter(int id)
+    {
+        await MatterService.DeleteMatterAsync(id);
+        matters = await MatterService.GetMattersAsync();
+    }
+
+    private void NewMatter()
+    {
+        showNewMatterModal = true;
+    }
+
+    private void CloseNewMatterModal()
+    {
+        showNewMatterModal = false;
+    }
+
+    private async Task CreateMatter()
+    {
+        await MatterService.AddMatterAsync(newMatter);
+        showNewMatterModal = false;
+        matters = await MatterService.GetMattersAsync();
+    }
+
+    private void ShowEditMatterModal(Models.Matter matter)
+    {
+        matterToEdit = matter;
+        showEditMatterModal = true;
+    }
+
+    private void CloseEditMatterModal()
+    {
+        showEditMatterModal = false;
+    }
+
+    private async Task UpdateMatter()
+    {
+        await MatterService.UpdateMatterAsync(matterToEdit);
+        showEditMatterModal = false;
+        matters = await MatterService.GetMattersAsync();
+    }
+}

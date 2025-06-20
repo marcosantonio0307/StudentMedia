@@ -1,0 +1,59 @@
+@page "/students/{Id:int}/edit"
+@using StudentMedia.Models
+@inject StudentMedia.Data.IStudentService StudentService
+@inject NavigationManager NavigationManager
+@inject ILogger<EditStudent> Logger
+@rendermode InteractiveServer
+
+<PageTitle>Editar Aluno</PageTitle>
+
+<h4>Editar Aluno</h4>
+
+<StudentForm Student="student" ButtonLabel="Atualizar" OnValidSubmit="UpdateStudent" />
+
+<!-- <EditForm Model="student" OnValidSubmit="UpdateStudent" FormName="editStudentForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label" for="nameInput">Nome</label>
+        <InputText id="nameInput" class="form-control" @bind-Value="student.Name" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="documentInput">Documento</label>
+        <InputText id="documentInput" class="form-control" @bind-Value="student.Document" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Atualizar</button>
+</EditForm> -->
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Student student;
+
+    protected override async Task OnInitializedAsync()
+    {
+        student = await StudentService.GetStudentByIdAsync(Id);
+        if (student == null)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task UpdateStudent()
+    {
+        if (student != null)
+        {
+            Logger.LogInformation("########### Updating student {Name} with Id = {Id}", student.Name, student.Id);
+            await StudentService.UpdateStudentAsync(student);
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            throw new InvalidOperationException("Student cannot be null.");
+        }
+    }
+}

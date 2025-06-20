@@ -1,0 +1,63 @@
+@using StudentMedia.Models
+@using System.ComponentModel.DataAnnotations
+
+<div class="modal show d-block" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@title</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="CloseModalCallback">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="period" OnValidSubmit="HandleValidSubmit" FormName="periodForm">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label class="form-label" for="nameInput">Nome</label>
+                        <InputText id="nameInput" @bind-Value="period.Name" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="notesAmountInput">Quantidade de Notas</label>
+                        <InputNumber id="notesAmountInput" @bind-Value="period.NotesAmount" class="form-control" />
+                    </div>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop fade show"></div>
+
+@code {
+    [Parameter]
+    public Models.Period period { get; set; }
+
+    [Parameter]
+    public string title { get; set; }
+
+    [Parameter]
+    public EventCallback OnValidSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback CloseModalCallback { get; set; }
+
+    private async Task HandleValidSubmit()
+    {
+        if (OnValidSubmit.HasDelegate)
+        {
+            await OnValidSubmit.InvokeAsync(null);
+        }
+    }
+
+    private void CloseModal()
+    {
+        if (CloseModalCallback.HasDelegate)
+        {
+            CloseModalCallback.InvokeAsync(null);
+        }
+    }
+}
