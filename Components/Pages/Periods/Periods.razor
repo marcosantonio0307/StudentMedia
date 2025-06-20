@@ -21,6 +21,7 @@
         {
             <tr>
                 <td>@period.Name</td>
+                <td>@period.NotesAmount</td>
                 <td>
                     <button class="btn btn-sm btn-primary" @onclick="() => ShowEditPeriodModal(period)">Editar</button>
                     <button class="btn btn-sm btn-danger" @onclick="() => ShowDeleteConfirmation(period)">Excluir</button>
@@ -133,6 +134,7 @@
     {
         await PeriodService.AddPeriodAsync(newPeriod);
         periods = await PeriodService.GetPeriodsAsync();
+        newPeriod = new Models.Period();
         CloseNewPeriodModal();
     }
 
