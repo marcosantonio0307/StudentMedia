@@ -23,7 +23,11 @@ namespace StudentMedia.Data
 
         public async Task<List<Note>> GetNotesAsync()
         {
-            return await _context.Notes.ToListAsync();
+            return await _context.Notes
+                .Include(n => n.Period)
+                .Include(n => n.Student)
+                .Include(n => n.Matter)
+                .ToListAsync();
         }
 
         public async Task<Note?> GetNoteByIdAsync(int id)

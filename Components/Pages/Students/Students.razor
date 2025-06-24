@@ -7,14 +7,13 @@
 
 <h4>Alunos</h4>
 
-<a href="/students/new" class="btn btn-success mb-3">Novo Aluno</a>
-
+<button class="btn btn-success mb-5" @onclick="() => NewStudent()">Novo</button>
 <table class="table">
     <thead>
         <tr>
-            <th class="col-2"></th>
             <th>Nome</th>
             <th>Documento</th>
+            <th class="col-2"></th>
         </tr>
     </thead>
     <tbody>
@@ -24,13 +23,18 @@
                 <td>@student.Name</td>
                 <td>@student.Document</td>
                 <td>
-                    <a href="@($"/students/{student.Id}/edit")" class="btn btn-sm btn-primary">Editar</a>
+                    <button class="btn btn-sm btn-primary" @onclick="() => ShowEditStudentModal(student)">Editar</button>
                     <button class="btn btn-sm btn-danger" @onclick="() => ShowDeleteConfirmation(student)">Excluir</button>
                 </td>
             </tr>
         }
     </tbody>
 </table>
+
+@if (!students?.Any() ?? true)
+{
+    <p class="text-center">Nenhum aluno cadastrado.</p>
+}
 
 @if (showConfirmationModal)
 {
@@ -57,10 +61,32 @@
     <div class="modal-backdrop fade show"></div>
 }
 
+@if (showNewStudentModal)
+{
+    <StudentModal
+        student="newStudent"
+        title="Novo Aluno"
+        OnValidSubmit="CreateStudent"
+        CloseModalCallback="CloseModal" />
+}
+
+@if (showEditStudentModal)
+{
+    <StudentModal
+        student="editStudent"
+        title="Editar Aluno"
+        OnValidSubmit="UpdateStudent"
+        CloseModalCallback="CloseModal" />
+}
+
 @code {
     private List<Models.Student>? students;
-    private bool showConfirmationModal = false;
+    private Models.Student newStudent = new Models.Student();
     private Models.Student studentToDelete;
+    private Models.Student editStudent;
+    private bool showConfirmationModal = false;
+    private bool showNewStudentModal = false;
+    private bool showEditStudentModal = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -76,6 +102,8 @@
     private void CloseModal()
     {
         showConfirmationModal = false;
+        showNewStudentModal = false;
+        showEditStudentModal = false;
     }
 
     private async Task ConfirmDelete()
@@ -88,5 +116,31 @@
     {
         await StudentService.DeleteStudentAsync(id);
         students = await StudentService.GetStudentsAsync();
+    }
+
+    private void NewStudent()
+    {
+        showNewStudentModal = true;
+    }
+
+    private void ShowEditStudentModal(Models.Student student)
+    {
+        editStudent = student;
+        showEditStudentModal = true;
+    }
+
+    private async Task CreateStudent()
+    {
+        await StudentService.AddStudentAsync(newStudent);
+        newStudent = new Models.Student();
+        students = await StudentService.GetStudentsAsync();
+        CloseModal();
+    }
+
+    private async Task UpdateStudent()
+    {
+        await StudentService.UpdateStudentAsync(editStudent);
+        students = await StudentService.GetStudentsAsync();
+        CloseModal();
     }
 }

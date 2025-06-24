@@ -1,12 +1,14 @@
 @page "/notes"
 @inject StudentMedia.Data.INoteService NoteService
 @inject NavigationManager NavigationManager
+@using StudentMedia.Models
 @rendermode InteractiveServer
 
 <PageTitle>Notas</PageTitle>
 
 <h4>Notas</h4>
-<button class="btn btn-success" @onclick="() => ShowNewNoteModal()">Nova</button>
+
+<button class="btn btn-success mb-5" @onclick="() => ShowNewNoteModal()">Nova</button>
 <table class="table">
     <thead>
         <tr>
@@ -21,9 +23,9 @@
         @foreach (var note in notes)
         {
             <tr>
-                <td>@note.Period.Name</td>
-                <td>@note.Student.Name</td>
-                <td>@note.Matter.Name</td>
+                <td>@note.Period?.Name</td>
+                <td>@note.Student?.Name</td>
+                <td>@note.Matter?.Name</td>
                 <td>@note.Score</td>
                 <td>
                     <button class="btn btn-sm btn-primary" @onclick="() => ShowEditNoteModal(note)">Editar</button>
