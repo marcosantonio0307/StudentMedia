@@ -1,0 +1,106 @@
+@using StudentMedia.Models
+@using System.ComponentModel.DataAnnotations
+@inject StudentMedia.Data.IPeriodService PeriodService
+@inject StudentMedia.Data.IStudentService StudentService
+@inject StudentMedia.Data.IMatterService MatterService
+
+<div class="modal show d-block" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@title</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="CloseModalCallback">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="note" OnValidSubmit="HandleValidSubmit" FormName="noteForm">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label class="form-label" for="periodSelect">Periodo</label>
+                        <InputSelect id="periodSelect" class="form-select" @bind-Value="note.PeriodId" required>
+                            <option value="">Selecione um período</option>
+                            @foreach (var period in periods)
+                            {
+                                <option value="@period.Id">@period.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="studentSelect">Aluno</label>
+                        <InputSelect id="studentSelect" class="form-select" @bind-Value="note.StudentId" required>
+                            <option value="">Selecione um aluno</option>
+                            @foreach (var student in students)
+                            {
+                                <option value="@student.Id">@student.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="matterSelect">Matéria</label>
+                        <InputSelect id="matterSelect" class="form-select" @bind-Value="note.MatterId" required>
+                            <option value="">Selecione uma matéria</option>
+                            @foreach (var matter in matters)
+                            {
+                                <option value="@matter.Id">@matter.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="scoreInput">Nota</label>
+                        <InputNumber id="scoreInput" class="form-control" @bind-Value="note.Score" step="0.01" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop fade show"></div>
+
+@code {
+    [Parameter]
+    public Models.Note note { get; set; }
+
+    [Parameter]
+    public string title { get; set; }
+
+    [Parameter]
+    public EventCallback OnValidSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback CloseModalCallback { get; set; }
+
+    private List<Models.Period> periods;
+    private List<Models.Student> students;
+    private List<Models.Matter> matters;
+
+    protected override async Task OnInitializedAsync()
+    {
+        periods = await PeriodService.GetPeriodsAsync();
+        students = await StudentService.GetStudentsAsync();
+        matters = await MatterService.GetMattersAsync();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (OnValidSubmit.HasDelegate)
+        {
+            await OnValidSubmit.InvokeAsync(null);
+        }
+    }
+
+    private void CloseModal()
+    {
+        if (CloseModalCallback.HasDelegate)
+        {
+            CloseModalCallback.InvokeAsync(null);
+        }
+    }
+}

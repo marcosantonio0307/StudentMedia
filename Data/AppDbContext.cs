@@ -13,5 +13,6 @@ namespace StudentMedia.Data
         public DbSet<Models.Student> Students { get; set; }
         public DbSet<Models.Matter> Matters { get; set; }
         public DbSet<Models.Period> Periods { get; set; }
+        public DbSet<Models.Note> Notes { get; set; }
     }
 }

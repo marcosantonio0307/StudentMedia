@@ -1,0 +1,142 @@
+@page "/notes"
+@inject StudentMedia.Data.INoteService NoteService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Notas</PageTitle>
+
+<h4>Notas</h4>
+<button class="btn btn-success" @onclick="() => ShowNewNoteModal()">Nova</button>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Periodo</th>
+            <th>Aluno</th>
+            <th>Matéria</th>
+            <th>Nota</th>
+            <th class="col-2"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var note in notes)
+        {
+            <tr>
+                <td>@note.Period.Name</td>
+                <td>@note.Student.Name</td>
+                <td>@note.Matter.Name</td>
+                <td>@note.Score</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" @onclick="() => ShowEditNoteModal(note)">Editar</button>
+                    <button class="btn btn-sm btn-danger" @onclick="() => ShowDeleteConfirmation(note)">Excluir</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!notes.Any())
+{
+    <p class="text-center">Nenhuma nota cadastrada.</p>
+}
+
+@if (showConfirmationModal)
+{
+    <div class="modal show d-block" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Exclusão</h5>
+                    <button type="button" class="close" aria-label="Close" @onclick="CloseModal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja excluir a nota de @noteToDelete.Student.Name na matéria @noteToDelete.Matter.Name?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="ConfirmDelete">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showNewModal)
+{
+    <NoteModal
+        note="newNote"
+        title="Nova Nota"
+        OnValidSubmit="CreateNote"
+        CloseModalCallback="CloseModal" />
+}
+
+@if (showEditModal)
+{
+    <NoteModal
+        note="noteToEdit"
+        title="Editar Nota"
+        OnValidSubmit="UpdateNote"
+        CloseModalCallback="CloseModal" />
+}
+
+@code {
+    private List<Models.Note> notes;
+    private Models.Note noteToDelete;
+    private Models.Note noteToEdit;
+    private Models.Note newNote = new Models.Note();
+    private bool showConfirmationModal = false;
+    private bool showEditModal = false;
+    private bool showNewModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        notes = await NoteService.GetNotesAsync();
+    }
+
+    private void ShowNewNoteModal()
+    {
+        showNewModal = true;
+    }
+
+    private void ShowEditNoteModal(StudentMedia.Models.Note note)
+    {
+        noteToEdit = note;
+        showEditModal = true;
+    }
+
+    private void ShowDeleteConfirmation(StudentMedia.Models.Note note)
+    {
+        noteToDelete = note;
+        showConfirmationModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showConfirmationModal = false;
+        showEditModal = false;
+        showNewModal = false;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        await NoteService.DeleteNoteAsync(noteToDelete.Id);
+        notes.Remove(noteToDelete);
+        CloseModal();
+    }
+
+    private async Task CreateNote()
+    {
+        await NoteService.AddNoteAsync(newNote);
+        notes = await NoteService.GetNotesAsync();
+        newNote = new Models.Note();
+        CloseModal();
+    }
+
+    private async Task UpdateNote()
+    {
+        await NoteService.UpdateNoteAsync(noteToEdit);
+        notes = await NoteService.GetNotesAsync();
+        CloseModal();
+    }
+}

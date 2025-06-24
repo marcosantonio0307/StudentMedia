@@ -10,6 +10,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<IMatterService, MatterService>();
 builder.Services.AddScoped<IPeriodService, PeriodService>();
+builder.Services.AddScoped<INoteService, NoteService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

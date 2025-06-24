@@ -50,6 +50,14 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9NYXR0ZXJzL01hdHRlcnMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[/home/marcos/marcos/StudentMedia/Components/Pages/Notes/NoteModal.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Ob3Rlcy9Ob3RlTW9kYWwucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/marcos/marcos/StudentMedia/Components/Pages/Notes/Notes.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Ob3Rlcy9Ob3Rlcy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [/home/marcos/marcos/StudentMedia/Components/Pages/Periods/PeriodModal.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9QZXJpb2RzL1BlcmlvZE1vZGFsLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
