@@ -1,4 +1,10 @@
 ﻿@page "/"
+@inject StudentMedia.Data.IStudentService StudentService
+@inject StudentMedia.Data.IPeriodService PeriodService
+@inject StudentMedia.Data.IMatterService MatterService
+@using StudentMedia.Models
+@inject ILogger<Home> Logger
+@rendermode InteractiveServer
 
 <PageTitle>Home</PageTitle>
 
@@ -6,4 +12,138 @@
 
 <p class="mb-5">Acompanhe a média dos seus alunos.</p>
 
-<Students />
+<label for="periodSelect">Período:</label>
+<InputSelect id="periodSelect" class="form-select" @bind-Value="selectedPeriodId">
+    @foreach (var period in periods)
+    {
+        <option value="@period.Id">@period.Name</option>
+    }
+</InputSelect>
+
+<label for="matterSelect">Matéria:</label>
+<InputSelect id="matterSelect" class="form-select" @bind-Value="selectedMatterId">
+    @foreach (var matter in matters)
+    {
+        <option value="@matter.Id">@matter.Name</option>
+    }
+</InputSelect>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            @if (selectedPeriod != null)
+            {
+                @for (int i = 1; i <= selectedPeriod.NotesAmount; i++)
+                {
+                    <th>Nota @i</th>
+                }
+            }
+            <th>Média</th>
+            <th class="col-2"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var student in students)
+        {
+            <tr>
+                <td>@student.Name</td>
+                @if (selectedPeriod != null)
+                {
+                    @foreach (var note in student.Notes)
+                    {
+                        if (note.PeriodId == selectedPeriod.Id)
+                        {
+                            <td>@note.Score</td>
+                        }
+                        else
+                        {
+                            <td>-</td>
+                        }
+                    }
+
+                    @for (int i = student.Notes.Count; i < selectedPeriod.NotesAmount; i++)
+                    {
+                        <td>-</td>
+                    }
+                    <td>@CalcMediaByNotes(student.Notes)</td>
+                    <td></td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Models.Student>? students;
+    private List<Models.Period>? periods;
+    private List<Models.Matter>? matters;
+    private Models.Period? selectedPeriod;
+    private Models.Matter? selectedMatter;
+
+    private int _selectedPeriodId;
+    private int selectedPeriodId
+    {
+        get => _selectedPeriodId;
+        set
+        {
+            if (_selectedPeriodId != value)
+            {
+                _selectedPeriodId = value;
+                _ = FilterByPeriodAndMatter();
+            }
+        }
+    }
+
+    private int _selectedMatterId;
+    private int selectedMatterId
+    {
+        get => _selectedMatterId;
+        set
+        {
+            if (_selectedMatterId != value)
+            {
+                _selectedMatterId = value;
+                _ = FilterByPeriodAndMatter();
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        students = await StudentService.GetStudentsAsync();
+        periods = await PeriodService.GetPeriodsAsync();
+        matters = await MatterService.GetMattersAsync();
+        if (periods != null && periods.Count > 0 && matters != null && matters.Count > 0)
+        {
+            selectedPeriodId = periods[0].Id;
+            selectedPeriod = periods[0];
+            selectedMatterId = matters[0].Id;
+            selectedMatter = matters[0];
+            students = await StudentService.GetStudentsWithNotesByPeriodAndMatterAsync(selectedPeriodId, selectedMatterId);
+        }
+    }
+
+    private async Task FilterByPeriodAndMatter()
+    {
+        Logger.LogInformation("Filtering by period with ID: {SelectedPeriodId}", selectedPeriodId);
+        selectedPeriod = await PeriodService.GetPeriodByIdAsync(selectedPeriodId);
+        selectedMatter = await MatterService.GetMatterByIdAsync(selectedMatterId);
+        if (selectedPeriodId != 0)
+        {
+            students = await StudentService.GetStudentsWithNotesByPeriodAndMatterAsync(selectedPeriodId, selectedMatterId);
+        }
+        StateHasChanged();
+    }
+
+    private double CalcMediaByNotes(ICollection<Models.Note> notes)
+    {
+        if (notes == null || notes.Count == 0)
+        {
+            return 0;
+        } else {
+            return notes.Average(n => n.Score);
+        }
+    }
+}

@@ -10,6 +10,7 @@ namespace StudentMedia.Data
         Task<Student> GetStudentByIdAsync(int id);
         Task UpdateStudentAsync(Student student);
         Task DeleteStudentAsync(int id);
+        Task<List<Student>> GetStudentsWithNotesByPeriodAndMatterAsync(int periodId, int matterId);
     }
 
     public class StudentService : IStudentService
@@ -63,6 +64,21 @@ namespace StudentMedia.Data
 
             _context.Students.Remove(student);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<Student>> GetStudentsWithNotesByPeriodAndMatterAsync(int periodId, int matterId)
+        {
+            return await _context.Students
+                .Include(s => s.Notes)
+                .Select(s => new Student
+                {
+                    Id = s.Id,
+                    Name = s.Name,
+                    Document = s.Document,
+                    Notes = s.Notes.Where(n => n.PeriodId == periodId && n.MatterId == matterId).ToList()
+                })
+                .OrderBy(s => s.Name)
+                .ToListAsync();
         }
     }
 }

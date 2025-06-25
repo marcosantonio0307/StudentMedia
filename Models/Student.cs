@@ -11,5 +11,7 @@ namespace StudentMedia.Models
 
         [Required(ErrorMessage = "Document is required")]
         public string Document { get; set; }
+
+        public ICollection<Note> Notes { get; set; }
     }
 }
