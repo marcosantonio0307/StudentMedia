@@ -2,13 +2,14 @@
 @inject StudentMedia.Data.IStudentService StudentService
 @inject StudentMedia.Data.IPeriodService PeriodService
 @inject StudentMedia.Data.IMatterService MatterService
+@inject StudentMedia.Data.INoteService NoteService
 @using StudentMedia.Models
 @inject ILogger<Home> Logger
 @rendermode InteractiveServer
 
 <PageTitle>Home</PageTitle>
 
-<h1>Bem vindo ao Student Media</h1>
+<h1>Bem vindo ao Média Fácil</h1>
 
 <p class="mb-5">Acompanhe a média dos seus alunos.</p>
 
@@ -41,7 +42,7 @@
                 }
             }
             <th>Média</th>
-            <th class="col-2"></th>
+            <th class="col-3"></th>
         </tr>
     </thead>
     <tbody>
@@ -55,7 +56,7 @@
                     {
                         if (note.PeriodId == selectedPeriod.Id)
                         {
-                            <td>@note.Score</td>
+                            <td class="user-select-none" @onclick="() => EditNote(note)">@note.Score</td>
                         }
                         else
                         {
@@ -68,12 +69,72 @@
                         <td>-</td>
                     }
                     <td>@CalcMediaByNotes(student.Notes)</td>
-                    <td></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1" @onclick="() => AddNote(student)">Adicionar</button>
+                        @if (student.Notes.Any())
+                        {
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteNote(student.Notes.Last())">Remover Última</button>
+                        } else
+                        {
+                            <button class="btn btn-sm btn-secondary" disabled>Remover Última</button>
+                        }
+                    </td>
                 }
             </tr>
         }
     </tbody>
 </table>
+
+@if (showNoteModal)
+{
+    <div class="modal show d-block" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@noteModalTitle</h5>
+                    <button type="button" class="close" aria-label="Close" @onclick="CloseModal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="noteModal" OnValidSubmit="SubmitNote" FormName="noteForm">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label class="form-label" for="scoreInput">Nota</label>
+                            <InputNumber id="scoreInput" class="form-control" @bind-Value="noteModal.Score" step="0.01" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showDeleteNoteModal)
+{
+    <div class="modal show d-block" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Exclusão</h5>
+                    <button type="button" class="close" aria-label="Close" @onclick="CloseModal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja excluir a última nota de @noteToDelete.Student.Name</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="ConfirmDeleteNote">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     private List<Models.Student>? students;
@@ -81,6 +142,11 @@
     private List<Models.Matter>? matters;
     private Models.Period? selectedPeriod;
     private Models.Matter? selectedMatter;
+    private Models.Note noteModal = new Models.Note();
+    private Models.Note noteToDelete;
+    private bool showNoteModal = false;
+    private bool showDeleteNoteModal = false;
+    private string noteModalTitle = "Adicionar Nota";
 
     private int _selectedPeriodId;
     private int selectedPeriodId
@@ -143,7 +209,66 @@
         {
             return 0;
         } else {
-            return notes.Average(n => n.Score);
+            return Math.Round(notes.Average(n => n.Score), 2);
         }
+    }
+
+    private void CloseModal()
+    {
+        showNoteModal = false;
+        showDeleteNoteModal = false;
+    }
+
+    private void AddNote(Models.Student student)
+    {
+        noteModal = new Models.Note
+        {
+            PeriodId = selectedPeriodId,
+            MatterId = selectedMatterId,
+            StudentId = student.Id
+        };
+        noteModalTitle = "Adicionar Nota para " + student.Name;
+        showNoteModal = true;
+    }
+
+    private void EditNote(Models.Note note)
+    {
+        noteModal = note;
+        noteModalTitle = "Editar Nota de " + note.Student.Name;
+        showNoteModal = true;
+    }
+
+    private async Task SubmitNote()
+    {
+        if (noteModal.Id == 0)
+        {
+            await NoteService.AddNoteAsync(noteModal);
+        }
+        else
+        {
+            await NoteService.UpdateNoteAsync(noteModal);
+        }
+        noteModal = new Models.Note();
+        students = await StudentService.GetStudentsWithNotesByPeriodAndMatterAsync(selectedPeriodId, selectedMatterId);
+        showNoteModal = false;
+    }
+
+    private void DeleteNote(Models.Note note)
+    {
+        if (note != null)
+        {
+            noteToDelete = note;
+            showDeleteNoteModal = true;
+        }
+    }
+
+    private async Task ConfirmDeleteNote()
+    {
+        if (noteToDelete != null)
+        {
+            await NoteService.DeleteNoteAsync(noteToDelete.Id);
+            students = await StudentService.GetStudentsWithNotesByPeriodAndMatterAsync(selectedPeriodId, selectedMatterId);
+        }
+        showDeleteNoteModal = false;
     }
 }
